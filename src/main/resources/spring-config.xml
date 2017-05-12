@@ -1,0 +1,105 @@
+<!-- Spring-Common.xml -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+xmlns:context="http://www.springframework.org/schema/context"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+
+<!-- <context:annotation-config> 是用于激活那些已经在spring容器里注册过的bean（无论是通过xml的方式还是通过package sanning的方式）上面的注解。
+     <context:component-scan>除了具有<context:annotation-config>的功能之外，<context:component-scan>还可以在指定的package下扫描以及注册javabean,
+     Spring会将被标注注解的类名拿到，然后再将该类名的第一个字母变为小写，放到getBean()方法中;
+             在使用Spring自动扫描组件后，运用注解@Resource和@Autowired，并为依赖对象设置名称 ,进行依赖注入,例如@Resource(name="userDao");private UserDAO userDao = null;
+             首先它会根据名称去找Spring自动扫描的并加入到Spring容器的组件(bean),如果有相同的名称，则进行依赖注入，如果没有相同的名称。则会根据类型区寻找组件。
+ -->
+	<context:component-scan base-package="com.ws.spring" />
+	<bean id="outputGeneratorService" class="com.ws.spring.service.OutputGeneratorService">
+		<property name="outputGenerator" ref="csvOutputGenerator" />
+	</bean>
+	
+	<bean id="csvOutputGenerator" class="com.ws.spring.impl.CsvOutputGenerator" />
+	<bean id="jsonOutputGenerator" class="com.ws.spring.impl.JsonOutputGenerator" />
+	<bean id="customerBean" class="com.ws.spring.Customer" init-method="initIt" destroy-method="cleanUp">
+		<property name="action" value="buy"/>
+		<property name="type" value="1"/>
+	</bean>
+	<bean id="personBean" class="com.ws.spring.Person">
+		<property name ="name" value="Joy" />
+		<property name ="address" value="11Street"/>
+		<property name ="age" value="23"/>
+	</bean>	
+	<!--  	<bean id="CustomerService" class="com.ws.spring.service.CustomerService"></bean>  -->
+	
+	<!-- spring aop -->
+	<bean id="customerAOP" class="com.ws.spring.aop.CustomerAOP">
+		<property name="name" value="Allen"/>
+		<property name="url" value="www.a.com"/>
+	</bean>
+	<bean id="hijackBeforeMethod" class="com.ws.spring.aop.HijackBeforeMethod"/>
+	<bean id="customerAOPProxy" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="target" ref="customerAOP"/>
+		<property name="interceptorNames">
+			<list>
+				<value>hijackBeforeMethod</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="hijackAfterMethod" class="com.ws.spring.aop.HijackAfterMethod" />
+
+	<bean id="customerServiceProxy" 
+                class="org.springframework.aop.framework.ProxyFactoryBean">
+
+		<property name="target" ref="customerAOP" />
+
+		<property name="interceptorNames">
+			<list>
+				<value>hijackAfterMethod</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="hiJackThrowsExptionBean" class="com.ws.spring.aop.HijackThrowException"/>
+	<bean id="throwExceptionProxy" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="target" ref="customerAOP"/>
+		<property name="interceptorNames">
+			<list>
+				<value>hiJackThrowsExptionBean</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="hijackAroundMethod" class="com.ws.spring.aop.HijackAroundMethod"/>
+	<bean id="aroundMethodProxy" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="target" ref="customerAOP"/>
+		<property name="interceptorNames">
+			<list>
+				<value>hijackAroundMethod</value>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- <bean id="customerPointcut" class="org.springframework.aop.support.NameMatchMethodPointcut">
+		<property name="mappedName" value="printName"></property>
+	</bean>
+	<bean id="customerAdvisor" class="org.springframework.aop.support.DefaultPointcutAdvisor">
+		<property name="pointcut" ref="customerPointcut"/>
+		<property name="advice" ref="hijackAroundMethod"/>
+	</bean>  -->
+	<bean id="customerAdvisor" class="org.springframework.aop.support.NameMatchMethodPointcutAdvisor">
+		<property name="mappedName" value="printName"></property>
+		<property name="advice" ref="hijackAroundMethod"/>
+	</bean>
+	<bean id="customerAopProxy" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="target" ref="customerAOP"/>
+		<property name="interceptorNames">
+			<list>
+				<value>customerAdvisor</value>
+			</list>
+		</property>
+	</bean>
+	
+	
+	
+	
+</beans>
